@@ -10,39 +10,64 @@ namespace HotelAPI.Controllers
     [ApiController]
     public class ReservationsController : ControllerBase
     {
-        private readonly AppDbContext _context;
+       private readonly AppDbContext _context;
 
-        public ReservationsController(AppDbContext context)
-        {
-            _context = context;
-        }
+public ReservationsController(AppDbContext context)
+{
+    _context = context;
+}
 
-        [HttpGet]
-        public async Task<IActionResult> GetReservations()
-        {
-            return Ok(await _context.Reservations
-                .Include(r => r.Client)
-                .Include(r => r.Room)
-                .ToListAsync());
-        }
+[HttpGet]
+public async Task<ActionResult<IEnumerable<Reservation>>> GetReservations()
+{
+    return await _context.Reservations
+        .Include(r => r.Client)
+        .Include(r => r.Room)
+        .ToListAsync();
+}
 
-        [HttpPost]
-        public async Task<IActionResult> CreateReservation(Reservation reservation)
-        {
-            bool isBooked = await _context.Reservations.AnyAsync(r =>
-                r.RoomId == reservation.RoomId &&
-                (
-                    reservation.CheckIn <= r.CheckOut &&
-                    reservation.CheckOut >= r.CheckIn
-                ));
+[HttpGet("{id}")]
+public async Task<ActionResult<Reservation>> GetReservation(int id)
+{
+    var reservation = await _context.Reservations
+        .Include(r => r.Client)
+        .Include(r => r.Room)
+        .FirstOrDefaultAsync(r => r.Id == id);
 
-            if (isBooked)
-                return BadRequest("Room already booked!");
+    if (reservation == null) return NotFound();
+    return reservation;
+}
 
-            _context.Reservations.Add(reservation);
-            await _context.SaveChangesAsync();
+[HttpPost]
+public async Task<ActionResult<Reservation>> CreateReservation(Reservation reservation)
+{
+    _context.Reservations.Add(reservation);
+    await _context.SaveChangesAsync();
 
-            return Ok(reservation);
-        }
+    return CreatedAtAction(nameof(GetReservation), new { id = reservation.Id }, reservation);
+}
+
+[HttpPut("{id}")]
+public async Task<IActionResult> UpdateReservation(int id, Reservation reservation)
+{
+    if (id != reservation.Id) return BadRequest();
+
+    _context.Entry(reservation).State = EntityState.Modified;
+    await _context.SaveChangesAsync();
+
+    return NoContent();
+}
+
+[HttpDelete("{id}")]
+public async Task<IActionResult> DeleteReservation(int id)
+{
+    var reservation = await _context.Reservations.FindAsync(id);
+    if (reservation == null) return NotFound();
+
+    _context.Reservations.Remove(reservation);
+    await _context.SaveChangesAsync();
+
+    return NoContent();
+}
     }
 }
