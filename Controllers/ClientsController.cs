@@ -1,7 +1,7 @@
 ﻿using HotelAPI.Data;
 using HotelAPI.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace HotelAPI.Controllers
 {
@@ -11,55 +11,61 @@ namespace HotelAPI.Controllers
     {
         private readonly AppDbContext _context;
 
- public ClientsController(AppDbContext context)
- {
-     _context = context;
- }
+        public ClientsController(AppDbContext context)
+        {
+            _context = context;
+        }
 
- [HttpGet]
- public async Task<ActionResult<IEnumerable<Client>>> GetClients()
- {
-     return await _context.Clients.ToListAsync();
- }
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Client>>> GetClients()
+        {
+            return await _context.Clients.ToListAsync();
+        }
 
- [HttpGet("{id}")]
- public async Task<ActionResult<Client>> GetClient(int id)
- {
-     var client = await _context.Clients.FindAsync(id);
-     if (client == null) return NotFound();
-     return client;
- }
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Client>> GetClient(int id)
+        {
+            var client = await _context.Clients.FindAsync(id);
 
- [HttpPost]
- public async Task<ActionResult<Client>> CreateClient(Client client)
- {
-     _context.Clients.Add(client);
-     await _context.SaveChangesAsync();
+            if (client == null)
+                return NotFound();
 
-     return CreatedAtAction(nameof(GetClient), new { id = client.Id }, client);
- }
+            return client;
+        }
 
- [HttpPut("{id}")]
- public async Task<IActionResult> UpdateClient(int id, Client client)
- {
-     if (id != client.Id) return BadRequest();
+        [HttpPost]
+        public async Task<ActionResult<Client>> CreateClient(Client client)
+        {
+            _context.Clients.Add(client);
+            await _context.SaveChangesAsync();
 
-     _context.Entry(client).State = EntityState.Modified;
-     await _context.SaveChangesAsync();
+            return CreatedAtAction(nameof(GetClient), new { id = client.Id }, client);
+        }
 
-     return NoContent();
- }
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateClient(int id, Client client)
+        {
+            if (id != client.Id)
+                return BadRequest();
 
- [HttpDelete("{id}")]
- public async Task<IActionResult> DeleteClient(int id)
- {
-     var client = await _context.Clients.FindAsync(id);
-     if (client == null) return NotFound();
+            _context.Entry(client).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
 
-     _context.Clients.Remove(client);
-     await _context.SaveChangesAsync();
+            return NoContent();
+        }
 
-     return NoContent();
- }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteClient(int id)
+        {
+            var client = await _context.Clients.FindAsync(id);
+
+            if (client == null)
+                return NotFound();
+
+            _context.Clients.Remove(client);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
     }
 }
